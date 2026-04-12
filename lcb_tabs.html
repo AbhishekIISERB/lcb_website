@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LCB — Laboratory of Chromatin Biology</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f2efe9;
+      --white: #ffffff;
+      --ink: #1a1916;
+      --muted: #7c7870;
+      --rule: #dedad3;
+      --tab-bg: #e8e4dc;
+      --accent: #3d6b41;
+    }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: transparent;
+      color: var(--ink);
+      font-size: 15px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    #backdrop-slider {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: -2;
+      background-size: cover; background-position: center;
+      transition: background-image 2.5s ease-in-out;
+      background-image: url('backdrop/bg1.jpeg');
+    }
+    #backdrop-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: -1;
+      background: var(--bg); opacity: 0.72;
+    }
+    header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--rule);
+      padding: 1.4rem 3rem 0;
+    }
+    .header-top {
+      display: flex; justify-content: space-between; align-items: flex-end;
+      margin-bottom: 1rem;
+    }
+    .site-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem; font-weight: 400; color: var(--ink);
+    }
+    .site-meta { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+    .tabs {
+      display: flex; list-style: none;
+      border-top: 1px solid var(--rule);
+      margin: 0 -3rem; padding: 0 3rem;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      background: none; border: none;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8rem; font-weight: 400;
+      color: var(--muted);
+      padding: 0.75rem 1.2rem;
+      cursor: pointer;
+      position: relative;
+      transition: color 0.2s;
+      white-space: nowrap;
+    }
+    .tab-btn::after {
+      content: '';
+      position: absolute; bottom: -1px; left: 0; right: 0;
+      height: 2px; background: var(--ink);
+      transform: scaleX(0); transition: transform 0.2s;
+    }
+    .tab-btn:hover { color: var(--ink); }
+    .tab-btn.active { color: var(--ink); font-weight: 500; }
+    .tab-btn.active::after { transform: scaleX(1); }
+    .content {
+      flex: 1;
+      max-width: 820px; width: 100%;
+      margin: 0 auto;
+      padding: 3rem;
+    }
+    .content:has(#tab-publications.active),
+    .content:has(#tab-research.active) {
+      max-width: 1100px;
+    }
+    .panel { display: none; animation: fadein 0.22s ease; }
+    .panel.active { display: block; }
+    @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.9rem; font-weight: 400; color: var(--ink);
+      margin-bottom: 0.35rem; line-height: 1.2;
+    }
+    h2 em { color: var(--accent); font-style: italic; }
+    .page-sub { font-size: 0.85rem; color: var(--ink); font-weight: 400; margin-bottom: 2.5rem; line-height: 1.6; }
+
+    /* HOME */
+    .home-hero { padding: 1.5rem 0 2.5rem; border-bottom: 1px solid var(--rule); margin-bottom: 2.5rem; }
+    .home-hero .kicker { font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 1rem; display: block; }
+    .home-hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.9rem, 4vw, 3rem); font-weight: 400; line-height: 1.2; color: var(--ink); margin-bottom: 1.2rem; }
+    .home-hero h1 em { color: var(--accent); font-style: italic; }
+    .home-hero p { font-size: 0.92rem; color: var(--ink); max-width: 560px; line-height: 1.85; font-weight: 400; }
+    .home-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--rule); }
+    .home-card { background: var(--white); padding: 1.6rem; }
+    .home-card .label { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 0.6rem; display: block; }
+    .home-card h3 { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 400; color: var(--ink); margin-bottom: 0.5rem; line-height: 1.3; }
+    .home-card p { font-size: 0.82rem; color: var(--ink); line-height: 1.75; font-weight: 400; }
+    .home-card .link { display: inline-block; margin-top: 0.9rem; font-size: 0.75rem; color: var(--accent); font-weight: 500; cursor: pointer; }
+    .home-card .link:hover { text-decoration: underline; }
+
+    /* ABOUT */
+    .about-layout { display: grid; grid-template-columns: 145px 1fr; gap: 2.5rem; margin-bottom: 2rem; }
+    .about-photo { width: 145px; height: 175px; background: var(--tab-bg); display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--rule); flex-shrink: 0; overflow: hidden; position: relative; }
+    .about-photo img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
+    .about-body .role { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 1rem; }
+    .about-body p { font-size: 0.88rem; color: var(--ink); line-height: 1.9; font-weight: 400; margin-bottom: 0.85rem; }
+    .stats-row { display: flex; gap: 2.5rem; padding-top: 1.4rem; border-top: 1px solid var(--rule); }
+    .stat .n { font-family: 'Playfair Display', serif; font-size: 1.9rem; color: var(--ink); display: block; line-height: 1; }
+    .stat .l { font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; display: block; }
+    .cv-download { padding-top: 1.4rem; border-top: 1px solid var(--rule); }
+    .cv-btn {
+      display: inline-flex; align-items: center; gap: 0.6rem;
+      background: var(--ink); color: var(--bg);
+      text-decoration: none;
+      padding: 0.7rem 1.5rem;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8rem; font-weight: 500;
+      letter-spacing: 0.04em;
+      transition: background 0.25s, transform 0.2s;
+    }
+    .cv-btn:hover { background: var(--accent); transform: translateY(-1px); }
+    .cv-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+    .cv-label { font-size: 0.68rem; color: var(--muted); margin-top: 0.6rem; display: block; }
+
+    /* ABOUT — sub-sections */
+    .about-section { margin-top: 2.5rem; }
+    .about-section-head {
+      font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--accent); font-weight: 500;
+      padding-bottom: 0.5rem; border-bottom: 1px solid var(--rule);
+      margin-bottom: 1rem;
+    }
+    .about-section p.intro {
+      font-size: 0.87rem; color: var(--muted); line-height: 1.9; font-weight: 300; margin-bottom: 1.5rem;
+    }
+    .timeline-item {
+      padding: 0.8rem 0; border-top: 1px solid var(--rule);
+      display: grid; grid-template-columns: 1fr; gap: 0.2rem;
+    }
+    .timeline-item:last-child { border-bottom: 1px solid var(--rule); }
+    .timeline-role { font-size: 0.88rem; font-weight: 500; color: var(--ink); line-height: 1.4; }
+    .timeline-place { font-size: 0.86rem; color: var(--ink); font-weight: 400; line-height: 1.6; }
+    .timeline-date { font-size: 0.72rem; color: var(--accent); font-weight: 500; letter-spacing: 0.04em; }
+    .about-list { list-style: none; padding: 0; }
+    .about-list li {
+      position: relative; padding: 0.55rem 0 0.55rem 1.1rem;
+      font-size: 0.88rem; color: var(--ink); line-height: 1.75; font-weight: 400;
+      border-top: 1px solid var(--rule);
+    }
+    .about-list li:last-child { border-bottom: 1px solid var(--rule); }
+    .about-list li::before {
+      content: ''; position: absolute; left: 0; top: 1.05rem;
+      width: 5px; height: 5px; background: var(--accent); border-radius: 50%;
+    }
+    .course-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--rule);
+    }
+    .course-item {
+      background: var(--white); padding: 0.7rem 1rem;
+      font-size: 0.86rem; color: var(--ink); font-weight: 400;
+    }
+    .course-item strong { color: var(--ink); font-weight: 500; }
+    @media (max-width: 680px) { .course-grid { grid-template-columns: 1fr; } }
+
+    /* RESEARCH */
+    .r-item { padding: 1.2rem 0; border-top: 1px solid var(--rule); display: grid; grid-template-columns: 2.2rem 1fr; gap: 1.1rem; }
+    .r-item:last-child { border-bottom: 1px solid var(--rule); }
+    .r-num { font-family: 'Playfair Display', serif; font-size: 0.85rem; color: var(--rule); padding-top: 2px; }
+    .r-title { font-size: 0.9rem; font-weight: 500; margin-bottom: 0.3rem; }
+    .r-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.75; font-weight: 300; }
+
+    /* Research Posters */
+    .poster-grid {
+      display: flex; flex-direction: column; gap: 2rem;
+      margin-top: 1.5rem;
+    }
+    .poster-card {
+      border: 1px solid var(--rule);
+      background: var(--white);
+      overflow: hidden;
+      cursor: pointer;
+      transition: box-shadow 0.3s ease, transform 0.2s ease;
+    }
+    .poster-card:hover {
+      box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
+    }
+    .poster-card img {
+      width: 100%; display: block;
+      transition: transform 0.4s ease;
+    }
+    .poster-card:hover img {
+      transform: scale(1.01);
+    }
+    .poster-caption {
+      padding: 1rem 1.2rem;
+      border-top: 1px solid var(--rule);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .poster-caption .poster-label {
+      font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--accent); font-weight: 500;
+    }
+    .poster-caption .poster-title {
+      font-size: 0.88rem; font-weight: 500; color: var(--ink);
+    }
+    .poster-caption .poster-expand {
+      font-size: 0.72rem; color: var(--muted); font-weight: 400;
+      display: flex; align-items: center; gap: 0.3rem;
+    }
+    .poster-caption .poster-expand svg { width: 13px; height: 13px; }
+
+    /* PUBLICATIONS */
+    .pub-item { padding: 1.2rem 0; border-top: 1px solid var(--rule); display: grid; grid-template-columns: 2.8rem 1fr; gap: 1.1rem; }
+    .pub-item:last-child { border-bottom: 1px solid var(--rule); }
+    .pub-yr { font-family: 'Playfair Display', serif; font-size: 0.85rem; color: var(--muted); padding-top: 2px; }
+    .pub-title { font-size: 0.88rem; color: var(--ink); line-height: 1.5; margin-bottom: 0.3rem; }
+    .pub-meta { font-size: 0.76rem; color: var(--muted); font-weight: 300; }
+    .pub-meta a { color: var(--accent); text-decoration: none; }
+    .pub-meta a:hover { text-decoration: underline; }
+
+    /* PDF Embed */
+    .pdf-container {
+      border: 1px solid var(--rule);
+      background: var(--white);
+      margin-top: 1.5rem;
+      position: relative;
+    }
+    .pdf-container iframe {
+      width: 100%; height: 90vh;
+      border: none; display: block;
+    }
+    .pdf-fallback {
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      padding: 1rem; border-top: 1px solid var(--rule);
+      background: var(--white);
+    }
+    .pdf-fallback a {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      color: var(--accent); text-decoration: none;
+      font-size: 0.8rem; font-weight: 500;
+    }
+    .pdf-fallback a:hover { text-decoration: underline; }
+    .pdf-fallback a svg { width: 14px; height: 14px; }
+
+    /* TEAM */
+    .team-section-head { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin: 2.5rem 0 1.2rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--rule); }
+    .team-section-head:first-child { margin-top: 0; }
+    .team-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1px; background: var(--rule); margin-bottom: 1.5rem;
+    }
+    .team-card {
+      background: var(--white); padding: 1.4rem;
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center;
+      transition: background 0.2s;
+    }
+    .team-card:hover { background: #faf9f6; }
+    .team-photo {
+      width: 100px; height: 100px;
+      background: var(--tab-bg);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Playfair Display', serif; font-size: 1.6rem; color: var(--accent);
+      flex-shrink: 0; border-radius: 50%; overflow: hidden; position: relative;
+      margin-bottom: 1rem;
+    }
+    .team-photo img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
+    .team-info { flex: 1; min-width: 0; }
+    .team-name { font-size: 0.9rem; font-weight: 500; color: var(--ink); margin-bottom: 0.25rem; line-height: 1.3; }
+    .team-name .roll { font-size: 0.68rem; color: var(--muted); font-weight: 300; display: block; margin-top: 0.15rem; margin-left: 0; }
+    .team-role-badge { font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 0.35rem; display: block; }
+    .team-email { font-size: 0.74rem; color: var(--muted); font-weight: 300; }
+    .team-email a { color: var(--accent); text-decoration: none; }
+    .team-email a:hover { text-decoration: underline; }
+    .team-grid.single { grid-template-columns: 1fr; max-width: 280px; }
+    @media (max-width: 900px) { .team-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px) { .team-grid { grid-template-columns: 1fr; } }
+
+    /* ALUMNI */
+    .alumni-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--rule); }
+    .alumni-card { background: var(--white); padding: 1.4rem 1.5rem; display: flex; gap: 1rem; align-items: flex-start; transition: background 0.2s; }
+    .alumni-card:hover { background: #faf9f6; }
+    .alumni-initial { width: 40px; height: 40px; background: var(--tab-bg); display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--accent); flex-shrink: 0; border-radius: 4px; }
+    .alumni-info { flex: 1; min-width: 0; }
+    .alumni-name { font-size: 0.88rem; font-weight: 500; color: var(--ink); margin-bottom: 0.3rem; line-height: 1.3; }
+    .alumni-lab-role { font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 0.35rem; display: block; }
+    .alumni-current { font-size: 0.79rem; color: var(--muted); line-height: 1.65; font-weight: 300; }
+    .alumni-count { font-size: 0.78rem; color: var(--muted); font-weight: 300; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--rule); }
+    .alumni-count strong { font-weight: 500; color: var(--ink); }
+    @media (max-width: 680px) { .alumni-grid { grid-template-columns: 1fr; } }
+
+    /* GALLERY */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--rule);
+    }
+    .gallery-item {
+      position: relative;
+      background: var(--white);
+      overflow: hidden;
+      aspect-ratio: 4 / 3;
+      cursor: pointer;
+    }
+    .gallery-item img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease, filter 0.4s ease;
+    }
+    .gallery-item:hover img {
+      transform: scale(1.04);
+    }
+    /* placeholder shown when no <img> is present */
+    .gallery-item:not(:has(img)) {
+      display: flex; align-items: center; justify-content: center;
+      background: var(--tab-bg);
+    }
+    .gallery-item:not(:has(img))::before {
+      content: '\f03e';
+      font-family: 'Playfair Display', serif;
+      font-size: 2.2rem;
+      color: var(--rule);
+      content: '⊞';
+    }
+    .gallery-tag {
+      position: absolute;
+      top: 0.75rem; left: 0.75rem;
+      background: var(--white);
+      color: var(--ink);
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.7rem;
+      line-height: 1;
+      pointer-events: none;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      z-index: 2;
+    }
+    .gallery-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 50%, rgba(26,25,22,0.45) 100%);
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      pointer-events: none;
+    }
+    .gallery-item:hover .gallery-overlay {
+      opacity: 1;
+    }
+    /* lightbox */
+    .lightbox {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: rgba(26,25,22,0.88); backdrop-filter: blur(8px);
+      align-items: center; justify-content: center;
+      cursor: zoom-out;
+    }
+    .lightbox.open { display: flex; animation: fadein 0.25s ease; }
+    .lightbox img {
+      max-width: 88vw; max-height: 88vh;
+      object-fit: contain;
+      border-radius: 2px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+    }
+    .lightbox-tag {
+      position: absolute;
+      bottom: 2rem; left: 50%;
+      transform: translateX(-50%);
+      background: var(--white);
+      color: var(--ink);
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.45rem 1rem;
+      pointer-events: none;
+    }
+    .lightbox-close {
+      position: absolute; top: 1.5rem; right: 2rem;
+      background: none; border: none;
+      color: rgba(255,255,255,0.7);
+      font-size: 1.8rem; cursor: pointer;
+      transition: color 0.2s;
+      line-height: 1;
+    }
+    .lightbox-close:hover { color: #fff; }
+    @media (max-width: 680px) {
+      .gallery-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 420px) {
+      .gallery-grid { grid-template-columns: 1fr; }
+    }
+
+    /* JOIN */
+    .j-item { padding: 1.2rem 0; border-top: 1px solid var(--rule); display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem; }
+    .j-item:last-child { border-bottom: 1px solid var(--rule); }
+    .j-title { font-size: 0.9rem; font-weight: 500; margin-bottom: 0.3rem; }
+    .j-desc { font-size: 0.81rem; color: var(--muted); line-height: 1.7; font-weight: 300; }
+    .j-tag { font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); font-weight: 500; white-space: nowrap; padding-top: 3px; }
+    .join-cta { margin-top: 2rem; padding: 1.4rem 1.6rem; background: var(--white); border: 1px solid var(--rule); }
+    .join-cta p { font-size: 0.84rem; color: var(--muted); line-height: 1.8; font-weight: 300; }
+    .join-cta a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .join-cta a:hover { text-decoration: underline; }
+
+    /* CONTACT */
+    .contact-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
+    .c-info p { font-size: 0.85rem; color: var(--muted); line-height: 1.85; font-weight: 300; margin-bottom: 1.4rem; }
+    .c-line { display: flex; gap: 0.65rem; margin-bottom: 0.9rem; }
+    .c-line svg { width: 14px; height: 14px; color: var(--accent); flex-shrink: 0; margin-top: 3px; }
+    .c-line span { font-size: 0.84rem; color: var(--ink); line-height: 1.65; font-weight: 400; }
+    .c-form { display: flex; flex-direction: column; gap: 0.85rem; }
+    .c-form label { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 0.22rem; }
+    .c-form input, .c-form textarea { width: 100%; background: var(--white); border: 1px solid var(--rule); padding: 0.6rem 0.8rem; font-family: 'Outfit', sans-serif; font-size: 0.85rem; color: var(--ink); outline: none; resize: none; transition: border-color 0.2s; }
+    .c-form input:focus, .c-form textarea:focus { border-color: var(--accent); }
+    .c-btn { align-self: flex-start; background: var(--ink); color: var(--bg); border: none; padding: 0.65rem 1.4rem; font-family: 'Outfit', sans-serif; font-size: 0.78rem; font-weight: 500; cursor: pointer; transition: background 0.2s; }
+    .c-btn:hover { background: var(--accent); }
+
+    footer { border-top: 1px solid var(--rule); padding: 1.3rem 3rem; display: flex; justify-content: space-between; align-items: center; background: var(--white); }
+    .f-left { font-size: 0.74rem; color: var(--muted); }
+    .f-right { font-size: 0.72rem; color: var(--muted); text-align: right; line-height: 1.6; }
+
+    @media (max-width: 680px) {
+      header { padding: 1.2rem 1.2rem 0; }
+      .tabs { margin: 0 -1.2rem; padding: 0 1.2rem; }
+      .content { padding: 2rem 1.2rem; }
+      .about-layout, .contact-layout, .home-grid { grid-template-columns: 1fr; }
+      footer { padding: 1.2rem; flex-direction: column; gap: 0.4rem; text-align: center; }
+      .f-right { text-align: center; }
+    }
+  </style>
+</head>
+<body>
+<div id="backdrop-slider"></div>
+<div id="backdrop-overlay"></div>
+
+<header>
+  <div class="header-top">
+    <span class="site-title">Laboratory of Chromatin Biology</span>
+    <span class="site-meta">IISER Bhopal · Biological Sciences</span>
+  </div>
+  <ul class="tabs" role="tablist">
+    <li><button class="tab-btn active" data-tab="home">Home</button></li>
+    <li><button class="tab-btn" data-tab="about">About our PI</button></li>
+    <li><button class="tab-btn" data-tab="research">Research</button></li>
+    <li><button class="tab-btn" data-tab="publications">Publications</button></li>
+    <li><button class="tab-btn" data-tab="team">Team</button></li>
+    <li><button class="tab-btn" data-tab="alumni">Alumni</button></li>
+    <li><button class="tab-btn" data-tab="gallery">Gallery</button></li>
+    <li><button class="tab-btn" data-tab="news">News</button></li>
+    <li><button class="tab-btn" data-tab="contact">Contact</button></li>
+  </ul>
+</header>
+
+<main class="content">
+
+  <!-- HOME -->
+  <div class="panel active" id="tab-home">
+    <div class="home-hero">
+      <span class="kicker">Welcome to LCB</span>
+      <h1>Chromatin, <em>epigenetics</em><br>&amp; signalling mechanisms</h1>
+      <p>We study the epigenetic regulation of stress response pathways in yeast and poultry — exploring histone modifications, chromatin remodeling, and metal ion homeostasis at IISER Bhopal.</p>
+    </div>
+    <div class="home-grid">
+      <div class="home-card">
+        <span class="label">Principal Investigator</span>
+        <h3>About our PI</h3>
+        <p>Prof. R.S. Tomar — Professor at IISER Bhopal with expertise in chromatin biology, biochemistry, and molecular biology.</p>
+        <a class="link" data-goto="about">Learn more →</a>
+      </div>
+      <div class="home-card">
+        <span class="label">Research</span>
+        <h3>Current research interests</h3>
+        <p>Chromatin signalling in eukaryotes, histone H3 clipping in poultry, and epigenetic regulation of metal homeostasis.</p>
+        <a class="link" data-goto="research">View research posters →</a>
+      </div>
+      <div class="home-card">
+        <span class="label">Publications</span>
+        <h3>Complete publication list</h3>
+        <p>Browse the full list of publications with DOI links — from FEBS Journal to EMBO Reports and beyond.</p>
+        <a class="link" data-goto="publications">See publications →</a>
+      </div>
+      <div class="home-card">
+        <span class="label">People</span>
+        <h3>Meet the team</h3>
+        <p>Post-docs, Ph.D. scholars, M.Sc. and BS-MS students collaborating on chromatin biology research.</p>
+        <a class="link" data-goto="team">View team →</a>
+      </div>
+      <div class="home-card">
+        <span class="label">Gallery</span>
+        <h3>Lab in pictures</h3>
+        <p>Glimpses from our workspace, people, conferences, and day-to-day science at the laboratory.</p>
+        <a class="link" data-goto="gallery">View gallery →</a>
+      </div>
+      <div class="home-card">
+        <span class="label">Contact</span>
+        <h3>Join the laboratory</h3>
+        <p>Interested in epigenetic modifications? Contact Dr. Tomar with your CV to join the team.</p>
+        <a class="link" data-goto="contact">Get in touch &#8594;</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABOUT -->
+  <div class="panel" id="tab-about">
+    <h2>Dr. R.S. <em>Tomar</em></h2>
+    <p class="page-sub">Principal Investigator · Laboratory of Chromatin Biology · IISER Bhopal</p>
+    <div class="about-layout">
+      <div class="about-photo"><img src="photos/R%20S%20Tomar%20photo%20for%20lab%20homepage.jpg" alt="Dr. R.S. Tomar"></div>
+      <div class="about-body">
+        <div class="role">Professor · Dept. of Biological Sciences · IISER Bhopal</div>
+        <p>Biochemistry and Molecular Biology — Understanding the epigenetic regulation of stress response pathways in yeast and poultry animals.</p>
+        <div class="cv-download">
+          <a class="cv-btn" href="cv/CV%20of%20R%20S%20Tomar.pdf" download>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download CV
+          </a>
+          <span class="cv-label">PDF · Curriculum Vitae</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Professional Experience -->
+    <div class="about-section">
+      <div class="about-section-head">Professional Experience</div>
+      <div class="timeline-item">
+        <span class="timeline-role">Professor, Biological Sciences</span>
+        <span class="timeline-place">Indian Institute of Science Education and Research Bhopal, India</span>
+        <span class="timeline-date">February 2018 — Present</span>
+      </div>
+      <div class="timeline-item">
+        <span class="timeline-role">Associate Professor, Biological Sciences</span>
+        <span class="timeline-place">Indian Institute of Science Education and Research Bhopal, India</span>
+        <span class="timeline-date">December 2013 — February 2018</span>
+      </div>
+      <div class="timeline-item">
+        <span class="timeline-role">Assistant Professor, Biological Sciences</span>
+        <span class="timeline-place">Indian Institute of Science Education and Research Bhopal, India</span>
+        <span class="timeline-date">January 2009 — November 2013</span>
+      </div>
+      <div class="timeline-item">
+        <span class="timeline-role">Post Doctoral Fellow</span>
+        <span class="timeline-place">The Ohio State University, Columbus (USA)</span>
+        <span class="timeline-date">January 2007 — December 2008</span>
+      </div>
+      <div class="timeline-item">
+        <span class="timeline-role">Post Doctoral Fellow</span>
+        <span class="timeline-place">The Penn State University, University Park (USA)</span>
+        <span class="timeline-date">October 2003 — December 2006</span>
+      </div>
+      <div class="timeline-item">
+        <span class="timeline-role">Post Doctoral Fellow</span>
+        <span class="timeline-place">University of Texas, Southwestern Medical Centre, Dallas (USA)</span>
+        <span class="timeline-date">May 2002 — September 2003</span>
+      </div>
+    </div>
+
+    <!-- Education -->
+    <div class="about-section">
+      <div class="about-section-head">Education</div>
+      <div class="timeline-item">
+        <span class="timeline-role">Ph.D. in Zoology</span>
+        <span class="timeline-place">Center for Advanced Study in Zoology, Banaras Hindu University, Varanasi, India</span>
+        <span class="timeline-date">2001</span>
+      </div>
+      <div class="timeline-item">
+        <span class="timeline-role">M.Sc. in Biochemistry</span>
+        <span class="timeline-place">Jiwaji University, Gwalior, India</span>
+        <span class="timeline-date">1993</span>
+      </div>
+      <div class="timeline-item">
+        <span class="timeline-role">B.Sc. in Biology</span>
+        <span class="timeline-place">Jiwaji University, Gwalior, India</span>
+        <span class="timeline-date">1991</span>
+      </div>
+    </div>
+
+    <!-- Administrative Experience -->
+    <div class="about-section">
+      <div class="about-section-head">Administrative Experience</div>
+      <ul class="about-list">
+        <li>Head, Center of Science and Society (CS2), IISER Bhopal — January 2023 onwards</li>
+        <li>Dean, Student Affairs, IISER Bhopal — August 2018 – September 2022</li>
+        <li>Head, Department of Biological Sciences, IISER Bhopal — January 2015 – March 2018</li>
+        <li>Coordinator of Department of Biological Sciences, IISER Bhopal — 2010 – 2012</li>
+        <li>Served as member, Board of Governors, IISER Bhopal</li>
+      </ul>
+    </div>
+
+    <!-- Academic Honours -->
+    <div class="about-section">
+      <div class="about-section-head">Academic / Professional Honours</div>
+      <ul class="about-list">
+        <li>Obtained 1st rank in the college during B.Sc. Based on merit, selected as secretary for student union.</li>
+        <li>Junior Research Fellowship by UGC for Ph.D.</li>
+      </ul>
+    </div>
+
+    <!-- Professional Services -->
+    <div class="about-section">
+      <div class="about-section-head">Professional Services</div>
+      <ul class="about-list">
+        <li>Invited as member in task force meeting for evaluation of research projects by Department of Biotechnology, Govt. of India</li>
+        <li>Invited by several institutes: IISc, CCMB, CDRI, IICT, IIT Roorkee, NIT Allahabad, BHU, JNU, NIT Bhopal as external expert member to conduct Ph.D. thesis defence examinations</li>
+        <li>Invited by CSIR, DBT, CSIR and C-CAMP to evaluate various research projects</li>
+        <li>Reviewed manuscripts for journals: EMBO Reports, FEBS Journal, ACS Applied Materials & Interfaces, Oncotarget, Mol Biol Reports, Autophagy, Environmental Pollution, PlosOne, Communications Biology, Molecular and Cellular Biology etc.</li>
+      </ul>
+    </div>
+
+    <!-- Courses Taught -->
+    <div class="about-section">
+      <div class="about-section-head">Courses Taught</div>
+      <div class="course-grid">
+        <div class="course-item"><strong>Bio 101:</strong> Biomolecules and Origin of Life</div>
+        <div class="course-item"><strong>Bio 202:</strong> Basic Genetics</div>
+        <div class="course-item"><strong>Bio 104:</strong> General Biology Laboratory II</div>
+        <div class="course-item"><strong>Bio 102:</strong> Diversity in the Living World</div>
+        <div class="course-item"><strong>Bio 301:</strong> Cell Biology</div>
+        <div class="course-item"><strong>Bio 303:</strong> Biochemistry I</div>
+        <div class="course-item"><strong>Bio 302:</strong> Biochemistry II</div>
+        <div class="course-item"><strong>Bio 304:</strong> Molecular Biology</div>
+        <div class="course-item"><strong>Bio 307:</strong> Biology Laboratory I</div>
+        <div class="course-item"><strong>Bio 308:</strong> Biology Laboratory II</div>
+        <div class="course-item"><strong>Bio 501S/601S:</strong> Epigenetics</div>
+        <div class="course-item"><strong>Bio 201:</strong> Fundamentals of Molecular Biology</div>
+        <div class="course-item"><strong>Bio 102:</strong> Fundamentals of Cell Biology</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RESEARCH -->
+  <div class="panel" id="tab-research">
+    <h2>Research <em>Interests</em></h2>
+    <p class="page-sub">Click on any poster to view full size.</p>
+
+    <div class="research-text" style="font-size: 0.92rem; color: var(--ink); line-height: 1.8; margin-bottom: 2.5rem; background: var(--white); padding: 1.8rem; border: 1px solid var(--rule);">
+      <p style="margin-bottom: 1rem;"><strong>To identify the role of epigenetics in maintenance of cellular homeostatic pathways and stress:</strong><br>
+      In eukaryotes, DNA is organized in the form of chromatin which consists of repeating units called nucleosomes. The structure and function of chromatin is regulated by the specific enzymes that modify DNA and histone proteins to maintain cellular homeostatic mechanisms under a variety of pathophysiological conditions. Several classes of enzymes compete for binding to the chromatin. The coordination among chromatin modifying enzymes is critical for survival under various stress conditions. The imbalance in the activity of chromatin modifying enzymes leads to the development of disease pathologies. We are trying to understand the significance of chromatin-associated epigenetic changes in response to intra- and extracellular factors.</p>
+      
+      <p style="margin-bottom: 0.6rem; font-weight: 500;">Following are our key research questions:</p>
+      <ol style="margin-left: 1rem; padding-left: 1rem; color: var(--ink);">
+        <li style="margin-bottom: 0.4rem;">To identify the role of histone tails in regulation of yeast flocculation.</li>
+        <li style="margin-bottom: 0.4rem;">To investigate the significance of histone clipping in viral and bacterial infections.</li>
+        <li style="margin-bottom: 0.4rem;">To identify the factors regulating the cellular homeostasis of metal ions.</li>
+        <li style="margin-bottom: 0.4rem;">To understand the significance of lipid droplets in DNA damage response and metal homeostasis.</li>
+      </ol>
+    </div>
+
+    <div class="poster-grid">
+
+      <div class="poster-card" onclick="openPoster(this)">
+        <img src="research/research1.png" alt="Chromatin and epigenetics: Signalling mechanisms in eukaryotes">
+        <div class="poster-caption">
+          <div>
+            <span class="poster-label">Research Overview</span>
+            <div class="poster-title">Chromatin and Epigenetics: Signalling Mechanisms in Eukaryotes</div>
+          </div>
+          <span class="poster-expand">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            View
+          </span>
+        </div>
+      </div>
+
+      <div class="poster-card" onclick="openPoster(this)">
+        <img src="research/research2.png" alt="Role of liver specific N-terminal truncation of histone H3 in chicken">
+        <div class="poster-caption">
+          <div>
+            <span class="poster-label">Current Project</span>
+            <div class="poster-title">Role of Liver Specific N-Terminal Truncation of Histone H3 in Chicken</div>
+          </div>
+          <span class="poster-expand">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            View
+          </span>
+        </div>
+      </div>
+
+      <div class="poster-card" onclick="openPoster(this)">
+        <img src="research/research3.png" alt="Understanding epigenetic regulation of metal homeostasis">
+        <div class="poster-caption">
+          <div>
+            <span class="poster-label">Current Project</span>
+            <div class="poster-title">Understanding Epigenetic Regulation of Metal Homeostasis</div>
+          </div>
+          <span class="poster-expand">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            View
+          </span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PUBLICATIONS -->
+  <div class="panel" id="tab-publications">
+    <h2><em>Publications</em></h2>
+    <p class="page-sub">Complete list of publications from the Laboratory of Chromatin Biology.</p>
+    <div class="pdf-container">
+      <iframe src="cv/List_of_all_publications_with_DOI.pdf" title="List of Publications"></iframe>
+      <div class="pdf-fallback">
+        <a href="cv/List_of_all_publications_with_DOI.pdf" target="_blank">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Open full PDF in new tab
+        </a>
+        <span style="color:var(--muted); font-size:0.78rem; margin-left:0.5rem;"> · </span>
+        <a href="cv/List_of_all_publications_with_DOI.pdf" download>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download PDF
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEAM -->
+  <div class="panel" id="tab-team">
+    <h2>The <em>Team</em></h2>
+    <p class="page-sub">Researchers at the Laboratory of Chromatin Biology, IISER Bhopal.</p>
+
+    <!-- ─── POST-DOCTORAL FELLOW ─── -->
+    <div class="team-section-head">Post-Doctoral Fellow</div>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-photo"><img src="photos/manoj.jpg" alt="Dr. Manoj Kumawat"></div>
+        <div class="team-info">
+          <div class="team-name">Dr. Manoj Kumawat</div>
+          <span class="team-role-badge">Post-Doc</span>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ─── PH.D. SCHOLARS ─── -->
+    <div class="team-section-head">Ph.D. Scholars</div>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-photo"><img src="photos/ranu.jpg" alt="Dr. Ranu Singh"></div>
+        <div class="team-info">
+          <div class="team-name">Dr. Ranu Singh</div>
+          <span class="team-role-badge">Ph.D. Completed</span>
+          <div class="team-email"><a href="mailto:ranu@iiserb.ac.in">ranu@iiserb.ac.in</a></div>
+        </div>
+      </div>
+      <div class="team-card">
+        <div class="team-photo"><img src="photos/santoshi.jpg" alt="Santoshi Acharjee"></div>
+        <div class="team-info">
+          <div class="team-name">Santoshi Acharjee<span class="roll">2110106</span></div>
+          <span class="team-role-badge">Ph.D. Scholar</span>
+          <div class="team-email"><a href="mailto:santoshi21@iiserb.ac.in">santoshi21@iiserb.ac.in</a></div>
+        </div>
+      </div>
+      <div class="team-card">
+        <div class="team-photo"><img src="photos/rajshree.jpg" alt="Rajshree Pal"></div>
+        <div class="team-info">
+          <div class="team-name">Rajshree Pal<span class="roll">2120112</span></div>
+          <span class="team-role-badge">Ph.D. Scholar</span>
+          <div class="team-email"><a href="mailto:rajshree21@iiserb.ac.in">rajshree21@iiserb.ac.in</a></div>
+        </div>
+      </div>
+      <div class="team-card">
+        <div class="team-photo"><img src="photos/vandana.jpg" alt="Vandana Anjana"></div>
+        <div class="team-info">
+          <div class="team-name">Vandana Anjana<span class="roll">2310114</span></div>
+          <span class="team-role-badge">Ph.D. Scholar</span>
+          <div class="team-email"><a href="mailto:vandana23@iiserb.ac.in">vandana23@iiserb.ac.in</a></div>
+        </div>
+      </div>
+      <div class="team-card">
+        <div class="team-photo"><img src="photos/smriti.jpg" alt="Smriti Anand"></div>
+        <div class="team-info">
+          <div class="team-name">Smriti Anand<span class="roll">2320115</span></div>
+          <span class="team-role-badge">Ph.D. Scholar</span>
+          <div class="team-email"><a href="mailto:smriti23@iiserb.ac.in">smriti23@iiserb.ac.in</a></div>
+        </div>
+      </div>
+      <div class="team-card">
+        <div class="team-photo"><img src="photos/prateeksha.jpg" alt="Prateeksha Thakur"></div>
+        <div class="team-info">
+          <div class="team-name">Prateeksha Thakur<span class="roll">2320112</span></div>
+          <span class="team-role-badge">Ph.D. Scholar</span>
+          <div class="team-email"><a href="mailto:prateeksha23@iiserb.ac.in">prateeksha23@iiserb.ac.in</a></div>
+        </div>
+      </div>
+      <div class="team-card">
+        <div class="team-photo"><img src="photos/sugandh.jpg" alt="Sugandh Sharma"></div>
+        <div class="team-info">
+          <div class="team-name">Sugandh Sharma<span class="roll">2410125</span></div>
+          <span class="team-role-badge">Ph.D. Scholar</span>
+          <div class="team-email"><a href="mailto:sugandh24@iiserb.ac.in">sugandh24@iiserb.ac.in</a></div>
+        </div>
+      </div>
+      <div class="team-card">
+        <div class="team-photo"><img src="photos/lakshmi.jpg" alt="Lakshmi Venkatesh Kolhapur"></div>
+        <div class="team-info">
+          <div class="team-name">Lakshmi V. Kolhapur<span class="roll">2510112</span></div>
+          <span class="team-role-badge">Ph.D. Scholar</span>
+          <div class="team-email"><a href="mailto:lakshmi25@iiserb.ac.in">lakshmi25@iiserb.ac.in</a></div>
+        </div>
+      </div>
+      <div class="team-card">
+        <div class="team-photo"><img src="photos/pooja.jpg" alt="Pooja Sharma"></div>
+        <div class="team-info">
+          <div class="team-name">Pooja Sharma<span class="roll">2520110</span></div>
+          <span class="team-role-badge">Ph.D. Scholar</span>
+          <div class="team-email"><a href="mailto:poojas25@iiserb.ac.in">poojas25@iiserb.ac.in</a></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── M.SC. STUDENTS ─── -->
+    <div class="team-section-head">M.Sc. Students</div>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-photo"><img src="photos/shalini.jpg" alt="Shalini Devi"></div>
+        <div class="team-info">
+          <div class="team-name">Shalini Devi<span class="roll">240112</span></div>
+          <span class="team-role-badge">M.Sc.</span>
+        </div>
+      </div>
+      <div class="team-card">
+        <div class="team-photo"><img src="photos/ankit.jpg" alt="Ankit Adhikari"></div>
+        <div class="team-info">
+          <div class="team-name">Ankit Adhikari<span class="roll">240120</span></div>
+          <span class="team-role-badge">M.Sc.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── BS-MS STUDENTS ─── -->
+    <div class="team-section-head">BS-MS Students</div>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-photo"><img src="photos/janvi.jpg" alt="Janvi Bansiwal"></div>
+        <div class="team-info">
+          <div class="team-name">Janvi Bansiwal<span class="roll">21129</span></div>
+          <span class="team-role-badge">BS-MS</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ALUMNI -->
+  <div class="panel" id="tab-alumni">
+    <h2>Lab <em>Alumni</em></h2>
+    <p class="page-sub">Former members of the Laboratory of Chromatin Biology who have gone on to pursue impactful careers in science across the globe.</p>
+    <div class="alumni-grid">
+
+      <div class="alumni-card">
+        <div class="alumni-initial">PM</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Dr. Papita Mandal</div>
+          <span class="alumni-lab-role">Ph.D.</span>
+          <div class="alumni-current">Staff Scientist at King Abdullah University of Science Technology, Saudi Arabia</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">GA</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Dr. Gajendra Kumar Azad</div>
+          <span class="alumni-lab-role">Ph.D. · Post-Doc</span>
+          <div class="alumni-current">Post-Doc at National University of Singapore; Assistant Professor, Dept. of Zoology, Central University Patna</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">VS</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Dr. Vikash Singh</div>
+          <span class="alumni-lab-role">Ph.D.</span>
+          <div class="alumni-current">Post-Doc at Hershey Medical Centre, Penn State, USA</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">SC</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Dr. Sakshi Chauhan</div>
+          <span class="alumni-lab-role">Ph.D.</span>
+          <div class="alumni-current">Post-Doc at NIH, USA</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">UG</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Dr. Upendarrao Golla</div>
+          <span class="alumni-lab-role">Ph.D.</span>
+          <div class="alumni-current">Post-Doc at Hershey Medical Centre, Penn State, USA</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">PS</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Dr. Prabhat Singh</div>
+          <span class="alumni-lab-role">Post-Doc</span>
+          <div class="alumni-current">Scientific Officer, IISER Berhampur</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">PS</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Dr. Pragya Shrivastava</div>
+          <span class="alumni-lab-role">Junior Research Fellow</span>
+          <div class="alumni-current">Ph.D. from IIT Mumbai</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">SB</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Shivani Baranwal</div>
+          <span class="alumni-lab-role">Junior Research Fellow</span>
+          <div class="alumni-current">—</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">NV</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Dr. Naveen Verma</div>
+          <span class="alumni-lab-role">BS-MS 2013 · 08012</span>
+          <div class="alumni-current">Ph.D. from Huntsman Cancer Institute, Salt Lake City, USA; Senior Scientist at Seek Labs, Salt Lake City, Utah, USA</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">GB</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Goutham Bandi</div>
+          <span class="alumni-lab-role">BS-MS 2014 · 09014</span>
+          <div class="alumni-current">—</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">JB</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Jagriti Banerjee</div>
+          <span class="alumni-lab-role">BS-MS 2015 · 10032</span>
+          <div class="alumni-current">—</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">RR</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Dr. Rishith Ravindran</div>
+          <span class="alumni-lab-role">BS-MS 2015 · 10071</span>
+          <div class="alumni-current">Ph.D. from IISER TVM</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">DJ</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Dr. Deepthi Joseph</div>
+          <span class="alumni-lab-role">BS-MS 2015 · 10024</span>
+          <div class="alumni-current">Ph.D. from IISc. Bangalore</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">MP</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Mubthasima PP</div>
+          <span class="alumni-lab-role">BS-MS 2016 · 11045</span>
+          <div class="alumni-current">Graduate Student at CFTRI, Mysore</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">JT</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Jeena TJ</div>
+          <span class="alumni-lab-role">BS-MS 2016 · 11035</span>
+          <div class="alumni-current">—</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">SS</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Dr. Sagar Salim</div>
+          <span class="alumni-lab-role">BS-MS 2017 · 12093</span>
+          <div class="alumni-current">Ph.D. from IISER TVM</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">AS</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Athira SV</div>
+          <span class="alumni-lab-role">BS-MS 2017 · 12027</span>
+          <div class="alumni-current">—</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">SP</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Soumya Prakash Sahu</div>
+          <span class="alumni-lab-role">BS-MS 2017 · 11065</span>
+          <div class="alumni-current">—</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">RK</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Rohit Kumar</div>
+          <span class="alumni-lab-role">BS-MS 2018 · 13115</span>
+          <div class="alumni-current">—</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">MV</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Mahajan Vibhuti Prakash</div>
+          <span class="alumni-lab-role">BS-MS 2018 · 13077</span>
+          <div class="alumni-current">Graduate Student at NCCS Pune</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">YO</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Dr. Yagna Anand Oza</div>
+          <span class="alumni-lab-role">BS-MS 2019 · 14102</span>
+          <div class="alumni-current">Ph.D. from University of California, USA; Lab Coordinator at Biobehavioural Health, Penn State University, USA</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">PK</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Dr. Pushpendra Kumar Sahu</div>
+          <span class="alumni-lab-role">Post-Doc</span>
+          <div class="alumni-current">Post-Doc at University of California, San Francisco</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">PT</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Dr. Pilendra Kumar Thakre</div>
+          <span class="alumni-lab-role">Post-Doc</span>
+          <div class="alumni-current">Post-Doc at Baylor College of Medicine, USA</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">SK</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Dr. Santhosh Kumar Sariki</div>
+          <span class="alumni-lab-role">Post-Doc</span>
+          <div class="alumni-current">Post-Doc at University of Michigan, USA</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">SS</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Dr. Swati Swagatika</div>
+          <span class="alumni-lab-role">Post-Doc</span>
+          <div class="alumni-current">Assistant Scientist at Pollution Control Board, Orissa</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">RS</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Dr. Rakesh Kumar Sahu</div>
+          <span class="alumni-lab-role">Post-Doc</span>
+          <div class="alumni-current">Post-Doc at NIH, USA</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">SS</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Dr. Sakshi Singh</div>
+          <span class="alumni-lab-role">Post-Doc</span>
+          <div class="alumni-current">Post-Doc at NIH, USA</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">RK</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Dr. Ramesh Kumawat</div>
+          <span class="alumni-lab-role">Post-Doc</span>
+          <div class="alumni-current">Post-Doc at Stowers Institute for Medical Research, USA</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">NS</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Dr. Nitu Saha</div>
+          <span class="alumni-lab-role">Post-Doc</span>
+          <div class="alumni-current">Post-Doc at Yale School of Medicine, USA</div>
+        </div>
+      </div>
+
+      <div class="alumni-card">
+        <div class="alumni-initial">RS</div>
+        <div class="alumni-info">
+          <div class="alumni-name">Dr. Ranu Singh</div>
+          <span class="alumni-lab-role">Ph.D. · 1820114</span>
+          <div class="alumni-current">Ph.D. completed, seeking position</div>
+        </div>
+      </div>
+
+    </div>
+    <p class="alumni-count"><strong>30</strong> alumni have trained in the Laboratory of Chromatin Biology and gone on to positions worldwide.</p>
+  </div>
+
+  <!-- GALLERY -->
+  <div class="panel" id="tab-gallery">
+    <h2>Lab <em>Gallery</em></h2>
+    <p class="page-sub">Glimpses from the Laboratory of Chromatin Biology — our workspace, our people, our science.</p>
+    <div class="gallery-grid">
+      <div class="gallery-item" data-label="Picture 1">
+        <span class="gallery-tag">Picture 1</span>
+        <div class="gallery-overlay"></div>
+        <img src="photos/Picture%201.jpg" alt="Picture 1">
+      </div>
+      <div class="gallery-item" data-label="Picture 2">
+        <span class="gallery-tag">Picture 2</span>
+        <div class="gallery-overlay"></div>
+        <img src="photos/Picture%202.jpg" alt="Picture 2">
+      </div>
+      <div class="gallery-item" data-label="Picture 3">
+        <span class="gallery-tag">Picture 3</span>
+        <div class="gallery-overlay"></div>
+        <img src="photos/Picture%203.jpg" alt="Picture 3">
+      </div>
+      <div class="gallery-item" data-label="Picture 4">
+        <span class="gallery-tag">Picture 4</span>
+        <div class="gallery-overlay"></div>
+        <img src="photos/Picture%204.jpg" alt="Picture 4">
+      </div>
+      <div class="gallery-item" data-label="Picture 5">
+        <span class="gallery-tag">Picture 5</span>
+        <div class="gallery-overlay"></div>
+        <img src="photos/Picture%205.jpg" alt="Picture 5">
+      </div>
+      <div class="gallery-item" data-label="Picture 6">
+        <span class="gallery-tag">Picture 6</span>
+        <div class="gallery-overlay"></div>
+        <img src="photos/Picture%206.jpg" alt="Picture 6">
+      </div>
+      <div class="gallery-item" data-label="Picture 7">
+        <span class="gallery-tag">Picture 7</span>
+        <div class="gallery-overlay"></div>
+        <img src="photos/Picture%207.jpg" alt="Picture 7">
+      </div>
+      <div class="gallery-item" data-label="Picture 8">
+        <span class="gallery-tag">Picture 8</span>
+        <div class="gallery-overlay"></div>
+        <img src="photos/Picture%208.jpg" alt="Picture 8">
+      </div>
+      <div class="gallery-item" data-label="Picture 9">
+        <span class="gallery-tag">Picture 9</span>
+        <div class="gallery-overlay"></div>
+        <img src="photos/Picture%209.jpg" alt="Picture 9">
+      </div>
+      <div class="gallery-item" data-label="Picture 10">
+        <span class="gallery-tag">Picture 10</span>
+        <div class="gallery-overlay"></div>
+        <img src="photos/Picture%2010.jpg" alt="Picture 10">
+      </div>
+      <div class="gallery-item" data-label="Picture 11">
+        <span class="gallery-tag">Picture 11</span>
+        <div class="gallery-overlay"></div>
+        <img src="photos/Picture%2011.jpg" alt="Picture 11">
+      </div>
+      <div class="gallery-item" data-label="Picture 12">
+        <span class="gallery-tag">Picture 12</span>
+        <div class="gallery-overlay"></div>
+        <img src="photos/Picture%2012.jpg" alt="Picture 12">
+      </div>
+      <div class="gallery-item" data-label="Picture 13">
+        <span class="gallery-tag">Picture 13</span>
+        <div class="gallery-overlay"></div>
+        <img src="photos/Picture%2013.jpg" alt="Picture 13">
+      </div>
+      <div class="gallery-item" data-label="Picture 14">
+        <span class="gallery-tag">Picture 14</span>
+        <div class="gallery-overlay"></div>
+        <img src="photos/Picture%2014.jpg" alt="Picture 14">
+      </div>
+      <div class="gallery-item" data-label="Picture 15">
+        <span class="gallery-tag">Picture 15</span>
+        <div class="gallery-overlay"></div>
+        <img src="photos/Picture%2015.jpg" alt="Picture 15">
+      </div>
+      <div class="gallery-item" data-label="Picture 16">
+        <span class="gallery-tag">Picture 16</span>
+        <div class="gallery-overlay"></div>
+        <img src="photos/Picture%2016.jpg" alt="Picture 16">
+      </div>
+      <div class="gallery-item" data-label="Picture 17">
+        <span class="gallery-tag">Picture 17</span>
+        <div class="gallery-overlay"></div>
+        <img src="photos/Picture%2017.jpg" alt="Picture 17">
+      </div>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+    <img id="lightbox-img" src="" alt="">
+    <span class="lightbox-tag" id="lightbox-tag"></span>
+  </div>
+
+  <!-- NEWS -->
+
+  <div class="panel" id="tab-news">
+    <h2>Lab <em>News</em></h2>
+    <p class="page-sub">Recent updates and announcements from the Laboratory of Chromatin Biology.</p>
+  <!--
+   <div class="about-section">
+      <div class="timeline-item">
+        <span class="timeline-role">New Publication Accepted</span>
+        <span class="timeline-place">Our latest research on epigenetic regulation has been accepted for publication!</span>
+        <span class="timeline-date">April 2026</span>
+      </div>
+      <div class="timeline-item">
+        <span class="timeline-role">Welcome New Members</span>
+        <span class="timeline-place">We are excited to welcome new Ph.D. scholars to the lab this semester.</span>
+        <span class="timeline-date">January 2026</span>
+      </div>
+      <div class="timeline-item">
+        <span class="timeline-role">Annual Conference Presentation</span>
+        <span class="timeline-place">Members of our lab presented posters at the annual Chromatin Biology Conference.</span>
+        <span class="timeline-date">November 2025</span>
+      </div>
+    </div>
+  -->
+  </div>
+
+  <!-- CONTACT -->
+  <div class="panel" id="tab-contact">
+    <h2>Join Us &amp; <em>Contact</em></h2>
+    <p class="page-sub">Interested in joining the lab or getting in touch? Here's how.</p>
+
+    <div class="about-section">
+      <div class="about-section-head">Join Us</div>
+      <p class="intro" style="font-size:0.87rem; color:var(--ink); line-height:1.9; font-weight:400;">Are you interested in understanding aspects of various epigenetic modifications? We are always looking forward to interactions with motivated researchers. If you are one of them, then directly contact Dr. Tomar at <a href="mailto:rst@iiserb.ac.in" style="color:var(--accent); font-weight:500;">rst@iiserb.ac.in</a> with your CV.</p>
+    </div>
+
+    <div class="about-section">
+      <div class="about-section-head">Contact Information</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; margin-top:0.5rem;">
+        <div>
+          <div class="c-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span style="font-weight:500; color:var(--ink);">Dr. Raghuvir Singh Tomar, Professor</span></div>
+          <div class="c-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Department of Biological Sciences<br>Office #219, Academic Building-3</span></div>
+          <div class="c-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><span>Indian Institute of Science Education and Research Bhopal<br>Bhopal Bypass Road, Bhauri, Bhopal - 462 066,<br>Madhya Pradesh, INDIA</span></div>
+        </div>
+        <div>
+          <div class="c-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.11 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.362 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg><span>+91-755-6691411 (Office)<br>+91-755-6691412 (Lab)</span></div>
+          <div class="c-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><span><a href="mailto:rst@iiserb.ac.in" style="color:var(--accent); text-decoration:none;">rst@iiserb.ac.in</a></span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<footer>
+  <span class="f-left">Laboratory of Chromatin Biology · IISER Bhopal</span>
+  <div class="f-right">Dept. of Biological Sciences<br></div>
+</footer>
+
+<script>
+  const tabs = document.querySelectorAll('.tab-btn');
+  const panels = document.querySelectorAll('.panel');
+
+  function goTo(name) {
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    panels.forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+    window.scrollTo(0, 0);
+  }
+
+  tabs.forEach(btn => btn.addEventListener('click', () => goTo(btn.dataset.tab)));
+
+  document.querySelectorAll('.link[data-goto]').forEach(a => {
+    a.addEventListener('click', () => goTo(a.dataset.goto));
+  });
+
+  // Gallery lightbox
+  document.querySelectorAll('.gallery-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const img = item.querySelector('img');
+      if (!img) return;
+      document.getElementById('lightbox-img').src = img.src;
+      document.getElementById('lightbox-tag').textContent = item.dataset.label || '';
+      document.getElementById('lightbox').classList.add('open');
+    });
+  });
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+  }
+  function openPoster(card) {
+    const img = card.querySelector('img');
+    if (!img) return;
+    const title = card.querySelector('.poster-title');
+    document.getElementById('lightbox-img').src = img.src;
+    document.getElementById('lightbox-tag').textContent = title ? title.textContent : '';
+    document.getElementById('lightbox').classList.add('open');
+  }
+  const backdrops = ['backdrop/bg1.jpeg', 'backdrop/bg2.jpeg', 'backdrop/bg3.jpeg', 'backdrop/bg4.jpeg'];
+  let currentBg = 0;
+  setInterval(() => {
+    currentBg = (currentBg + 1) % backdrops.length;
+    document.getElementById('backdrop-slider').style.backgroundImage = `url('${backdrops[currentBg]}')`;
+  }, 8000);
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+</script>
+</body>
+</html>
